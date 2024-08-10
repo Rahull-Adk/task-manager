@@ -32,6 +32,7 @@ const userSchema = new Schema(
 
     avatar: {
         type: String,
+
     },
     fullName: {
         type: String,

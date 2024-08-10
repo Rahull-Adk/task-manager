@@ -9,7 +9,7 @@ export const updateUser = async (req, res) => {
         const avatar = req.file;
         const userId = req.params.id;
 
-        const user = await User.findById(userId).populate("tasks");
+        const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
         if (req.user.id !== userId) {
@@ -69,19 +69,30 @@ export const updateUser = async (req, res) => {
         }
 
         if (avatar) {
+
             if (user.avatar) {
                 const publicId = user.avatar.split("/").pop().split(".")[0];
                 await cloudinary.uploader.destroy(publicId);
             }
-            const avatarUrl = await cloudinaryUpload(avatar.path);
-            if (!avatarUrl) {
-                await fs.unlink(avatar.path, (error) => console.log(error));
-                return res.status(500).json({ message: "Internal server error" });
-            } else {
-                user.avatar = avatarUrl;
-                await fs.unlink(avatar.path, (error) => console.log(error));
+
+            try {
+                const avatarUrl = await cloudinaryUpload(avatar.path);
+
+                if (!avatarUrl) {
+                    return res.status(500).json({ message: "Internal server error" });
+                } else {
+                    user.avatar = await  avatarUrl;
+                }
+            } catch (error) {
+                console.log(`Error during Cloudinary upload: ${error}`);
+                return res.status(500).json({ message: "Failed to upload avatar" });
+            } finally {
+                fs.unlink(avatar.path, (error) => {
+                    if (error) console.log(`Error deleting temporary file: ${error}`);
+                });
             }
         }
+
 
         await user.save();
         user.password = null;

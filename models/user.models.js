@@ -16,17 +16,28 @@ const userSchema = new Schema(
       unique: true,
       trim: true,
     },
+      likedPosts: [{
+        type: Schema.Types.ObjectId,
+          ref: "Task"
+      }],
+      commentedPosts: [{
+        type: Schema.Types.ObjectId,
+          ref: "Task"
+      }],
     password: {
       type: String,
       required: true,
       minlength: 6,
     },
-    tasks: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Task",
-      },
-    ],
+
+    avatar: {
+        type: String,
+    },
+    fullName: {
+        type: String,
+        required: true,
+    }
+
   },
   { timestamps: true }
 );

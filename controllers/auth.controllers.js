@@ -1,5 +1,6 @@
 import { User } from "../models/user.models.js";
 
+
 export const signUp = async (req, res) => {
   try {
     const { username, fullName, email, password } = req.body;
@@ -64,6 +65,8 @@ export const login = async (req, res) => {
     const token = await userCheck.generateToken();
 
     const loggedInUser = await User.findOne({username}).select("-password");
+
+
 
     return res.status(200).cookie("token", token, {
       httpOnly: true,

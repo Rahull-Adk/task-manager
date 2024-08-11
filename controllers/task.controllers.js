@@ -1,7 +1,32 @@
 import {User} from "../models/user.models.js";
 import {Task} from "../models/task.models.js";
 import mongoose from "mongoose";
+import moment from "moment";
 
+const isDueSoon = async (dueDate) => {
+    const now = moment();
+    const due = moment(dueDate);
+    const dayUntilDue = due.diff(now, "days");
+    return dayUntilDue <= 3
+}
+
+export const getMyTasks = async (req, res) => {
+    const { id } = req.params;
+    const { filterBy } = req.body;
+
+    // Fetching all tasks for the user
+    let tasks = await Task.find({ user: id });
+
+    if (filterBy === "date") {
+        // Sorting by creation date (newest first)
+        tasks = tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (filterBy === "dueDate") {
+        // Sorting by due date (earliest first)
+        tasks = tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    }
+
+    return res.status(200).json({ tasks });
+};
 export const createTask = async (req, res) => {
     try {
         const {id} = req.user;
@@ -22,9 +47,8 @@ export const createTask = async (req, res) => {
     catch (error) {
         console.log(`Error in createTask controller: ${error}`);
         return res.status(500).json({message: "Internal Server Error"});
-    }
-}
-
+    };
+};
 export const deleteTask = async (req, res) => {
     try{
         const {id} = req.params;
@@ -44,6 +68,7 @@ export const deleteTask = async (req, res) => {
 }
 
 export const editTask = async (req, res) => {
+
     try {
         const {title, description, status, dueDate} = req.body;
         if(!title && !description && !status && !dueDate) {
@@ -70,3 +95,10 @@ export const editTask = async (req, res) => {
         return res.status(500).json({message: "Internal Server Error"})
     }
 }
+
+export const getAllTask = async (req, res) => {
+    const tasks = await Task.find().sort({createdAt: -1}).populate({path: "user", select: "-password"});
+    if(tasks.length < 1) return res.status(200).json({});
+
+    return res.status(200).json({tasks});
+};
